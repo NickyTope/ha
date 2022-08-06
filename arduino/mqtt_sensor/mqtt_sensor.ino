@@ -1,5 +1,6 @@
+#include "arduino_secrets.h"
+
 #include <PubSubClient.h>
-#include <FastLED.h>
 // Include the correct WiFi header file for the board we're running on
 // This code will work for ESP8266, ESP32 and Arduino MKRWIFI1010
 #if defined(ESP8266)
@@ -15,20 +16,15 @@
 #endif
 
 // Replace the next variables with your SSID/Password combination
-char* ssid = "";
-char* password = "";
+char* ssid = SECRET_SSID;
+char* password = SECRET_PASSWORD;
 
-const char* mqtt_server = "";
-const char* mqtt_user = "";
-const char* mqtt_pass = "";
+const char* mqtt_server = SECRET_MQTT_SERVER;
+const char* mqtt_user = SECRET_MQTT_USER;
+const char* mqtt_pass = SECRET_MQTT_PASS;
 
 // Expects a PIR sensor connected to a digital interrupt pin
-const int kSensorPin = 2;
-
-// RGB LED to use to indicate activity
-const int kIndicatorRed = 3;
-const int kIndicatorGreen = 4;
-const int kIndicatorBlue = 5;
+const int kSensorPin = 14;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -53,8 +49,8 @@ void connect() {
     delay(1000);
   }
 
-  client.publish("dinky/status","online");
-  client.publish("homeassistant/binary_sensor/dinky/config", "{\"name\": \"dinky\", \"unique_id\": \"dinkysensor\", \"device_class\": \"motion\", \"state_topic\": \"homeassistant/binary_sensor/dinky/state\"}");
+  client.publish("dinky/status", "online");
+  client.publish("homeassistant/binary_sensor/dinky/config", "{\"name\": \"dinky\", \"unique_id\": \"dinkysensor\", \"device_class\": \"motion\", \"state_topic\": \"dinky/motion\"}");
 
   Serial.println("\nconnected!");
 }
@@ -68,9 +64,6 @@ void setup() {
   setup_wifi();
   client.setServer(mqtt_server, 1883);
   pinMode(kSensorPin, INPUT);
-  pinMode(kIndicatorRed, OUTPUT);
-  pinMode(kIndicatorGreen, OUTPUT);
-  pinMode(kIndicatorBlue, OUTPUT);
 }
 
 
@@ -117,8 +110,7 @@ void reconnect() {
     if (client.connect(hexMAC, mqtt_user, mqtt_pass)) {
       Serial.println("connected");
       // Subscribe
-      //client.subscribe("presPin/pressure");
-      client.subscribe("mcqn/test");
+      //client.subscribe("dinky/test");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -143,22 +135,20 @@ void loop() {
 
   if (digitalRead(kSensorPin))
   {
-    Serial.print("+");
     // Movement detected
     if (!gMovementState) {
+      Serial.println("detected");
       // Rising edge, send a message
-      client.publish("dinky/motion", "1");
-      client.publish("homeassistant/binary_sensor/dinky/state", "ON");
+      client.publish("dinky/motion", "ON");
       gMovementState = true;
     }
   }
   else
   {
-    Serial.print("_");
     if (gMovementState) {
+      Serial.println("cleared");
       // Falling edge
-      client.publish("dinky/motion", "0");
-      client.publish("homeassistant/binary_sensor/dinky/state", "OFF");
+      client.publish("dinky/motion", "OFF");
       gMovementState = false;
     }
   }

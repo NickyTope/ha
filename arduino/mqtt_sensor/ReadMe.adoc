@@ -1,0 +1,17 @@
+:Author: topey
+:Date: 06/08/2022
+:License: Public Domain
+
+= Project: mqtt_sensor
+
+A simple pir sensor using an esp8266 D1 mini
+
+== Setup
+
+create a secrets file called arduino_secrets.h with the following:
+
+#define SECRET_SSID ""
+#define SECRET_PASSWORD ""
+#define SECRET_MQTT_SERVER ""
+#define SECRET_MQTT_USER ""
+#define SECRET_MQTT_PASS ""
