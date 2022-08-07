@@ -10,12 +10,14 @@ A simple mqtt publisher
 
 create a secrets file called arduino_secrets.h with the following:
 
+```c
 #define SECRET_SSID ""
 #define SECRET_PASSWORD ""
 #define SECRET_MQTT_SERVER ""
 #define SECRET_MQTT_USER ""
 #define SECRET_MQTT_PASS ""
 #define SECRET_MQTT_ID "" // ~10 digit unique id for this device
+```
 
 == Automations
 

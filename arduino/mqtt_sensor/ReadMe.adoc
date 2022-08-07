@@ -10,8 +10,10 @@ A simple pir sensor using an esp8266 D1 mini
 
 create a secrets file called arduino_secrets.h with the following:
 
+```c
 #define SECRET_SSID ""
 #define SECRET_PASSWORD ""
 #define SECRET_MQTT_SERVER ""
 #define SECRET_MQTT_USER ""
 #define SECRET_MQTT_PASS ""
+```
