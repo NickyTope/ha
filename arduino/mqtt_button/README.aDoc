@@ -4,9 +4,18 @@
 
 = Project: mqtt_button
 
-A simple mqtt publisher
+A simple mqtt publisher using an esp8266
 
 == Setup
+
+In Arduino IDE, prefs, Additional Boards manager urls, add:  
+`https://arduino.esp8266.com/stable/package_esp8266com_index.json`
+
+open tools, board, board manager and search for (and install) esp8266
+
+open tools, Manage Libraries, find and install:
+- AceButton
+- PubSubClient (Nick Leary)
 
 create a secrets file called arduino_secrets.h with the following:
 

@@ -8,6 +8,16 @@ A simple pir sensor using an esp8266 D1 mini
 
 == Setup
 
+In Arduino IDE, prefs, Additional Boards manager urls, add:  
+`https://arduino.esp8266.com/stable/package_esp8266com_index.json`
+
+open tools, board, board manager and search for (and install) esp8266
+
+open tools, Manage Libraries, find and install:
+- PubSubClient (Nick Leary)
+
+== Setup
+
 create a secrets file called arduino_secrets.h with the following:
 
 ```c
