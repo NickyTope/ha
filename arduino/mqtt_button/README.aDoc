@@ -1,0 +1,39 @@
+:Author: topey
+:Date: 06/08/2022
+:License: Public Domain
+
+= Project: mqtt_button
+
+A simple mqtt publisher
+
+== Setup
+
+create a secrets file called arduino_secrets.h with the following:
+
+#define SECRET_SSID ""
+#define SECRET_PASSWORD ""
+#define SECRET_MQTT_SERVER ""
+#define SECRET_MQTT_USER ""
+#define SECRET_MQTT_PASS ""
+#define SECRET_MQTT_ID "" // ~10 digit unique id for this device
+
+== Automations
+
+use the topic /dinky/button/(id)/button(1|2)/state
+and payload "PRESS" or "DOUBLE"
+
+```yaml
+alias: Master Bedroom toggle
+description: ""
+trigger:
+  - platform: mqtt
+    topic: dinky/button/3128772929/button2/state
+    payload: PRESS
+condition: []
+action:
+  - type: toggle
+    device_id: 48dbed6e2df4397219ebbe1394b044cb
+    entity_id: light.bedroom
+    domain: light
+mode: single
+```

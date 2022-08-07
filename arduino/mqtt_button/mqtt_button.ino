@@ -1,21 +1,8 @@
 #include "arduino_secrets.h"
-
 #include <PubSubClient.h>
-// Include the correct WiFi header file for the board we're running on
-// This code will work for ESP8266, ESP32 and Arduino MKRWIFI1010
-#if defined(ESP8266)
 #include <ESP8266WiFi.h>
-#elif defined(ESP32)
-#include <WiFi.h>
-#elif defined(ARDUINO_SAMD_MKRWIFI1010)
-#include <WiFiNINA.h>
-#elif defined(ARDUINO_SAMD_MKR1000)
-#include <WiFi101.h>
-#else
-#error "Chosen board not implemented.  WiFi won't work yet"
-#endif
-
-// TODO: use the patterns here.. https://www.studiopieters.nl/homebridge-mqtt-button/
+#include <AceButton.h>
+using namespace ace_button;
 
 // Replace the next variables with your SSID/Password combination
 char* ssid = SECRET_SSID;
@@ -25,18 +12,25 @@ const char* mqtt_server = SECRET_MQTT_SERVER;
 const char* mqtt_user = SECRET_MQTT_USER;
 const char* mqtt_pass = SECRET_MQTT_PASS;
 
-// Expects a PIR sensor connected to a digital interrupt pin
-const int kSensorPin = 14;
+String mqtt_id = SECRET_MQTT_ID;
+String mqtt_root = "dinky/button/";
+String surl = mqtt_root + mqtt_id + (char *)("/status");
+const char* mqtt_status = surl.c_str();
+String turl = mqtt_root + mqtt_id + (char *)("/button1/state");
+const char* mqtt_button1 = turl.c_str();
+String turl2 = mqtt_root + mqtt_id + (char *)("/button2/state");
+const char* mqtt_button2 = turl2.c_str();
+
+const int BUT1_PIN = 4;
+const int BUT2_PIN = 5;
+AceButton but1(BUT1_PIN);
+AceButton but2(BUT2_PIN);
 
 WiFiClient espClient;
 PubSubClient client(espClient);
 
 char hexMAC[3 + 12 + 1] = "espxxxxxxxxxxxx"; // length of "esp" + 12 bytes for MAC + 1 byte '\0' terminator
 uint8_t mac[6];
-
-char msg[50];
-int value = 0;
-unsigned long lastMillis = 0;
 
 void connect() {
   Serial.print("checking wifi...");
@@ -50,22 +44,32 @@ void connect() {
     Serial.print(".");
     delay(1000);
   }
-
-  client.publish("dinky/status", "online");
-  client.publish("homeassistant/binary_sensor/dinky/config", "{\"name\": \"dinky\", \"unique_id\": \"dinkysensor\", \"device_class\": \"motion\", \"state_topic\": \"dinky/motion\"}");
-
+  
+  client.publish(mqtt_status, "online");
   Serial.println("\nconnected!");
 }
 
+// Forward reference to prevent Arduino compiler becoming confused.
+void handleEvent(AceButton*, uint8_t, uint8_t);
 
 void setup() {
   Serial.begin(115200);
-
   Serial.println("Let's go!");
+
+  // use pullup resistors
+  pinMode(BUT1_PIN, INPUT_PULLUP);
+  pinMode(BUT2_PIN, INPUT_PULLUP);
+
+  ButtonConfig* buttonConfig = ButtonConfig::getSystemButtonConfig();
+  buttonConfig->setEventHandler(handleEvent);
+  buttonConfig->setFeature(ButtonConfig::kFeatureDoubleClick);
+  buttonConfig->setFeature(
+      ButtonConfig::kFeatureSuppressClickBeforeDoubleClick);
+  buttonConfig->setFeature(ButtonConfig::kFeatureSuppressAfterClick);
+  buttonConfig->setFeature(ButtonConfig::kFeatureSuppressAfterDoubleClick);
 
   setup_wifi();
   client.setServer(mqtt_server, 1883);
-  pinMode(kSensorPin, INPUT);
 }
 
 
@@ -123,38 +127,39 @@ void reconnect() {
   }
 }
 
-// store the on/off state so we only send a change
-bool gMovementState = false;
+unsigned long lastCount = 0;
 
 void loop() {
-
   client.loop();
-  delay(10);  // <- fixes some issues with WiFi stability
-
+  but1.check();
+  but2.check();
   if (!client.connected()) {
     connect();
+    delay(10);
   }
+}
 
-  if (digitalRead(kSensorPin))
-  {
-    // Movement detected
-    if (!gMovementState) {
-      Serial.println("detected");
-      // Rising edge, send a message
-      client.publish("dinky/motion", "ON");
-      gMovementState = true;
-    }
+void handleEvent(AceButton* button, uint8_t eventType, uint8_t buttonState) {
+  bool but1_action = button->getPin() == BUT1_PIN;
+  
+  switch (eventType) {
+    case AceButton::kEventClicked:
+      Serial.println('clicked');
+      if (but1_action) {
+        client.publish(mqtt_button1, "PRESS");
+      } else {
+        client.publish(mqtt_button2, "PRESS");
+      }
+      break;
+    case AceButton::kEventDoubleClicked:
+      Serial.println('double');
+      if (but1_action) {
+        client.publish(mqtt_button1, "DOUBLE");
+      } else {
+        client.publish(mqtt_button2, "DOUBLE");
+      }
+      break;
   }
-  else
-  {
-    if (gMovementState) {
-      Serial.println("cleared");
-      // Falling edge
-      client.publish("dinky/motion", "OFF");
-      gMovementState = false;
-    }
-  }
-  delay(500);
 }
 
 char hex_digit(uint8_t aValue) {
