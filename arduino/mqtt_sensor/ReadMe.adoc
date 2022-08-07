@@ -14,7 +14,8 @@ In Arduino IDE, prefs, Additional Boards manager urls, add:
 open tools, board, board manager and search for (and install) esp8266
 
 open tools, Manage Libraries, find and install:
- - PubSubClient (Nick Leary)
+
+* PubSubClient (Nick Leary)
 
 == Setup
 
